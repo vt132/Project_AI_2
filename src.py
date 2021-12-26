@@ -1,11 +1,9 @@
 from math import ceil
 from pysat.formula import CNF
-from pysat.solvers import Solver, Minisat22
+from pysat.solvers import Solver, Lingeling
 import numpy
 
 def cnflv1(queens):
-    if((queens[0]-1)%8 != 0 or (queens[1]-1)%8 != 1 or (queens[2]-1)%8 != 2 or (queens[3]-1)%8 != 3 or (queens[4]-1)%8 != 4 or (queens[5]-1)%8 != 5 or (queens[6]-1)%8 != 6 or (queens[7]-1)%8 != 7):
-        return None
     result = []
     #for prob d
     """
@@ -45,31 +43,41 @@ def cnflv1(queens):
             result.append([-i, -j])
     """
     for i in range(8):
+        if queens[i]==0 :
+            break
+        if queens[i]%8 != i:
+            return []
         result.append([queens[i]])
-        row = ceil(i/8)
-        for j in range(i, row*8+1):
-            if j==i:
+        
+        row = ceil(queens[i]/8)
+        for j in range(row*8-7, row*8+1):
+            if j==queens[i]:
                 continue
             result.append([-j])
-        for j in range(i, 65, 8):
-            if j == i:
-                continue
-            result.append([-j])
-        col = i % 8
-
+        col = queens[i] % 8
         if col == 0:
             col = 8
-        for j in range(i,min(((8- col + row)* 8 + 1)),65, 9):
-            if j == i:
+        for j in range(col, 65, 8):
+            if j == queens[i]:
                 continue
-        result.append([-j])
-        for j in range(i, 65, 7):
-            if i == j:
+            result.append([-j])
+        if(row-col < 0):
+            uppermost_left = col
+        else:
+            uppermost_left = row*8
+        for j in range(uppermost_left,min(((8- col + row)* 8 + 1),65), 9):
+            if j == queens[i]:
+                continue
+            result.append([-j])
+        uppermost_right = row + col
+        for j in range(uppermost_right, 65, 7):
+            if queens[i] == j:
                 continue
             elif ceil((j-7)/8) == ceil(j/8):
                 break
-        result.append([-j])
+            result.append([-j])
     return result
+
 def cnflv2(queens):
     result = []
 
@@ -112,29 +120,40 @@ def cnflv2(queens):
     """
 
     for i in range(8):
+        if queens[i]==0 :
+            break
         result.append([queens[i]])
-        row = ceil(i/8)
-        for j in range(i, row*8+1):
-            if j==i:
+        
+        row = ceil(queens[i]/8)
+        for j in range(row*8-7, row*8+1):
+            if j==queens[i]:
                 continue
             result.append([-j])
-        for j in range(i, 65, 8):
-            if j == i:
-                continue
-            result.append([-j])
-        col = i % 8
+        col = (queens[i]) % 8
         if col == 0:
             col = 8
-        for j in range(i,min(((8- col + row)* 8 + 1)),65, 9):
-            if j == i:
+        for j in range(col, 65, 8):
+            if j == queens[i]:
                 continue
-        result.append([-j])
-        for j in range(i, 65, 7):
-            if i == j:
+            result.append([-j])
+        if(row-col < 0):
+            uppermost_left = abs(row-col) + 1
+        else:
+            uppermost_left = (row-col)*8+1
+        for j in range(uppermost_left,min(((8- col + row)* 8 + 1),65), 9):
+            if j == queens[i]:
                 continue
-            elif ceil((j-7)/8) == ceil(j/8):
+            result.append([-j])
+        if(row + col <= 9):
+            uppermost_right = row + col - 1
+        else:
+            uppermost_right = (row-(8-col))*8 
+        for j in range(uppermost_right, 65, 7):
+            if queens[i] == j:
+                continue
+            elif ceil((j-7)/8) == ceil(j/8) and queens[i] < uppermost_right:
                 break
-        result.append([-j])
+            result.append([-j])
     return result
 
 def solverlv1(queens):
@@ -165,7 +184,7 @@ def solverlv1(queens):
 
         if col == 0:
             col = 8
-        for j in range(i,min(((8- col + row)* 8 + 1)),65, 9):
+        for j in range(i,min(((8- col + row)* 8 + 1),65), 9):
             if j == i:
                 continue
             clauses.append([-i, -j])
@@ -176,10 +195,13 @@ def solverlv1(queens):
             elif ceil((j-7)/8) == ceil(j/8):
                 break
             clauses.append([-i, -j])
+    with Lingeling(bootstrap_with=clauses) as m:
+        print(m.solve())
+        print(m.get_core())
 
 def solverlv2(queens):
     clauses=CNF()
-    temp = cnflv1(queens)
+    temp = cnflv2(queens)
     for i in temp:
         clauses.append(i)
     for i in range(8):
@@ -202,10 +224,9 @@ def solverlv2(queens):
     for i in range(1, 65):
         row = ceil(i/8)
         col = i % 8
-
         if col == 0:
             col = 8
-        for j in range(i,min(((8- col + row)* 8 + 1)),65, 9):
+        for j in range(i,min(((8- col + row)* 8 + 1),65), 9):
             if j == i:
                 continue
             clauses.append([-i, -j])
@@ -216,5 +237,12 @@ def solverlv2(queens):
             elif ceil((j-7)/8) == ceil(j/8):
                 break
             clauses.append([-i, -j])
-    with Minisat22(bootstrap_with=clauses) as m:
-        m.solve()
+    print(clauses.clauses)
+    with Lingeling(bootstrap_with=clauses.clauses, with_proof=True) as m:
+        print(m.solve())
+        print(m.get_proof())
+
+def main():
+    queens=[4, 15, 19, 32, 34, 45, 49, 62]
+    solverlv2(queens)
+main()
