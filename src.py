@@ -1,17 +1,18 @@
 from math import ceil
 from pysat.formula import CNF
-from pysat.solvers import Minisat22, Solver, Lingeling
+from pysat.solvers import Solver, Lingeling
 import numpy
 
-def cnflv1(queens):
+def cnflv1(queens): #no cnf for column
     result = []
     for i in range(8):
         if queens[i]==0 :
-            break
+            return []
         if (queens[i]-1)%8 != i:
             return []
         result.append([queens[i]])
-        
+        x = int((queens[i]-1)/8)
+        y = (queens[i]-1)%8
         row = ceil(queens[i]/8)
         for j in range(row*8-7, row*8+1):
             if j==queens[i]:
@@ -20,10 +21,6 @@ def cnflv1(queens):
         col = (queens[i]) % 8
         if col == 0:
             col = 8
-        for j in range(col, 65, 8):
-            if j == queens[i]:
-                continue
-            result.append([-j])
         if(row-col < 0):
             uppermost_left = abs(row-col) + 1
         else:
@@ -32,26 +29,21 @@ def cnflv1(queens):
             if j == queens[i]:
                 continue
             result.append([-j])
-        if(row + col <= 9):
-            uppermost_right = row + col - 1
-        else:
-            uppermost_right = (row-(8-col))*8 
-        for j in range(uppermost_right, 65, 7):
-            if queens[i] == j:
+        for j in range(x+y):
+            if j==x:
                 continue
-            elif ceil((j-7)/8) == ceil(j/8) and queens[i] < uppermost_right:
-                break
-            result.append([-j])
+            result.append([-(j * 8 + (x+y-j) + 1)])
     return result
 
-def cnflv2(queens):
+def cnflv2(queens): #include cnf for column
     result = []
     for i in range(8):
         if queens[i]==0 :
-            break
+            return []
         result.append([queens[i]])
         
         row = ceil(queens[i]/8)
+        
         for j in range(row*8-7, row*8+1):
             if j==queens[i]:
                 continue
@@ -79,7 +71,7 @@ def cnflv2(queens):
             result.append([-(j * 8 + (x+y-j) + 1)])
     return result
 
-def solverlv2():
+def solver():
     clauses = CNF()
     for i in range(8):
         a = []
@@ -123,5 +115,10 @@ def solverlv2():
 
 def main():
     queens=[4, 15, 19, 32, 34, 45, 49, 62]
-    solverlv2()
+    
+    #each element is a cnf clause
+    print(cnflv1(queens))
+    print(cnflv2(queens)) 
+    
+    solver() #give a satisfied set
 main()
