@@ -9,7 +9,7 @@ def cnflv1(queens): #no cnf for column
         if queens[i]==0 :
             return []
         if (queens[i]-1)%8 != i:
-            return []
+            return []   
         result.append([queens[i]])
         x = int((queens[i]-1)/8)
         y = (queens[i]-1)%8
@@ -108,16 +108,17 @@ def solver():
             clauses.append([-i, -j])
     clauses.to_file("cnfs")
     with Lingeling(bootstrap_with=clauses.clauses, ) as m:
-        print(m.solve(assumptions=[1]))
+        print(m.solve())
         print(m.get_model())
 
         
 
 def main():
-    queens=[4, 15, 19, 32, 34, 45, 49, 62]
-    
+    queens=[4, 15, 19, 32, 34, 45, 49, 62] #not arrange by col formula i*8+j+1
+    queens1=[49, 34, 19, 4, 45, 62, 15, 32] #arrange by col
     #each element is a cnf clause
-    print(cnflv1(queens))
+    print(cnflv1(queens)) 
+    print(cnflv1(queens1))
     print(cnflv2(queens)) 
     
     solver() #give a satisfied set
