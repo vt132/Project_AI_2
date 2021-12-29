@@ -226,11 +226,9 @@ print_q(visited_boards)
 import matplotlib.pyplot as plt
 labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 
-fig, ax = plt.subplots(10, 1)
-print(len(visited_boards))
-for i in range(len(visited_boards)):
-    ax[0, i].plot(visited_boards[i][0])    
-ax.imshow()
+fig, ax = plt.subplots()
+
+im = ax.imshow(visited_boards[len(visited_boards) - 1][0])
 
 # Show all ticks and label them with the respective list entries
 ax.set_xticks(np.arange(len(labels)), labels=labels)
